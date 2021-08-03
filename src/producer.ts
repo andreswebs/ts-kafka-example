@@ -1,23 +1,26 @@
 import reader from 'readline-sync';
 import { Kafka, Producer } from 'kafkajs';
 
-import { getSessionToken } from './sts';
+import { getSASL } from './sasl-aws';
 
 import { config, topic, useAWS } from './config';
 
 const sendPayload =
   (producer: Producer) =>
-  (topic: string)      =>
-  (key: string)        =>
-  (value: string)      =>
-{
-  return producer.send({
-    topic,
-    messages: [{ key, value }],
-  });
-};
+  (topic: string) =>
+  (key: string) =>
+  (value: string) => {
+    return producer.send({
+      topic,
+      messages: [{ key, value }],
+    });
+  };
 
 async function main() {
+  if (useAWS) {
+    const sasl = await getSASL();
+    config.sasl = sasl;
+  }
 
   const kafka = new Kafka(config);
 
@@ -31,7 +34,7 @@ async function main() {
 
   try {
     await producer.connect();
-  } catch(e) {
+  } catch (e) {
     console.error(e);
     process.exit(1);
   }
@@ -48,7 +51,6 @@ async function main() {
       console.error('Caught Error while sending:', e);
     }
   }
-
 }
 
 main();

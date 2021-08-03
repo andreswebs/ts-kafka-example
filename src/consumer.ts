@@ -1,11 +1,16 @@
 import { Kafka } from 'kafkajs';
-import { config, topic, groupId } from './config';
+import { getSASL } from './sasl-aws';
+import { config, topic, groupId, useAWS } from './config';
 
-const kafka = new Kafka(config);
+async function run() {
+  if (useAWS) {
+    const sasl = await getSASL();
+    config.sasl = sasl;
+  }
 
-const consumer = kafka.consumer({ groupId });
+  const kafka = new Kafka(config);
 
-const run = async () => {
+  const consumer = kafka.consumer({ groupId });
   await consumer.connect();
   await consumer.subscribe({ topic, fromBeginning: true });
 
@@ -19,6 +24,6 @@ const run = async () => {
       });
     },
   });
-};
+}
 
 run().catch(console.error);

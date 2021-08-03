@@ -8,19 +8,12 @@ const groupId = process.env.KAFKA_GROUP_ID || 'kafka';
 
 const useAWS: boolean = process.env.KAFKA_AWS_DISABLE ? false : true;
 
-const brokers = brokersString.split(',').map(s => s.trim());
+const brokers = brokersString.split(',').map((s) => s.trim());
 
 const config: KafkaConfig = {
   clientId,
   ssl,
   brokers,
-  sasl: {
-    mechanism: 'aws',
-    authorizationIdentity: '',
-    accessKeyId: '',
-    secretAccessKey: '',
-    sessionToken: ''
-  }
 };
 
 export { config, topic, groupId, useAWS };
