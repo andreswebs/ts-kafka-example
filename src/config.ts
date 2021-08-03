@@ -1,8 +1,26 @@
-const config = {
-  clientId: 'kafka-example',
-  // ssl: true,
-  // brokers: ['broker:9094'],
-  brokers: ['broker:9092'],
+import { KafkaConfig } from 'kafkajs';
+
+const clientId = process.env.KAFKA_CLIENT_ID || 'kafka';
+const ssl = process.env.KAFKA_SSL_DISABLE ? false : true;
+const brokersString = process.env.KAFKA_BROKERS || '';
+const topic = process.env.KAFKA_TOPIC || 'msgs';
+const groupId = process.env.KAFKA_GROUP_ID || 'kafka';
+
+const useAWS: boolean = process.env.KAFKA_AWS_DISABLE ? false : true;
+
+const brokers = brokersString.split(',').map(s => s.trim());
+
+const config: KafkaConfig = {
+  clientId,
+  ssl,
+  brokers,
+  sasl: {
+    mechanism: 'aws',
+    authorizationIdentity: '',
+    accessKeyId: '',
+    secretAccessKey: '',
+    sessionToken: ''
+  }
 };
 
-export { config };
+export { config, topic, groupId, useAWS };

@@ -1,29 +1,41 @@
 import reader from 'readline-sync';
-import { Kafka } from 'kafkajs';
+import { Kafka, Producer } from 'kafkajs';
 
-import { config } from './config';
+import { getSessionToken } from './sts';
 
-const kafka = new Kafka(config);
+import { config, topic, useAWS } from './config';
 
-const producer = kafka.producer({
-  maxInFlightRequests: 1,
-  idempotent: true,
-  transactionalId: 'uniqueProducerId',
-});
-
-async function sendPayload(input: string) {
-  try {
-    await producer.send({
-      topic: 'test',
-      messages: [{ key: 'test', value: input }],
-    });
-  } catch (e) {
-    console.error('Caught Error while sending:', e);
-  }
-}
+const sendPayload =
+  (producer: Producer) =>
+  (topic: string)      =>
+  (key: string)        =>
+  (value: string)      =>
+{
+  return producer.send({
+    topic,
+    messages: [{ key, value }],
+  });
+};
 
 async function main() {
-  await producer.connect();
+
+  const kafka = new Kafka(config);
+
+  const transactionalId = (Math.random() + 1).toString(36).substring(2); // unique producer ID
+
+  const producer = kafka.producer({
+    maxInFlightRequests: 1,
+    idempotent: true,
+    transactionalId,
+  });
+
+  try {
+    await producer.connect();
+  } catch(e) {
+    console.error(e);
+    process.exit(1);
+  }
+
   /* eslint-disable-next-line*/
   while (true) {
     const input = reader.question('Data: ');
@@ -31,11 +43,12 @@ async function main() {
       process.exit(0);
     }
     try {
-      await sendPayload(input);
+      await sendPayload(producer)(topic)('test')(input);
     } catch (e) {
-      console.error(e);
+      console.error('Caught Error while sending:', e);
     }
   }
+
 }
 
 main();
